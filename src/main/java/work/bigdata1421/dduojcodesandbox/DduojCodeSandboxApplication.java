@@ -6,6 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class DduojCodeSandboxApplication {
 
+    // 这么晦涩难懂吗
     public static void main(String[] args) {
         SpringApplication.run(DduojCodeSandboxApplication.class, args);
     }
