@@ -1,3 +1,5 @@
+package com.yupi.yuojcodesandbox.unsafe;
+
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -7,7 +9,7 @@ import java.util.List;
 /**
  * 读取服务器文件（文件信息泄露）
  */
-public class Main {
+public class ReadFileError {
 
     public static void main(String[] args) throws InterruptedException, IOException {
         String userDir = System.getProperty("user.dir");

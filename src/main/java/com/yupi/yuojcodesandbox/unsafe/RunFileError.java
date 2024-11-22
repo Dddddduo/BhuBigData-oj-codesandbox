@@ -1,3 +1,5 @@
+package com.yupi.yuojcodesandbox.unsafe;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -6,7 +8,7 @@ import java.io.InputStreamReader;
 /**
  * 运行其他程序（比如危险木马）
  */
-public class Main {
+public class RunFileError {
 
     public static void main(String[] args) throws InterruptedException, IOException {
         String userDir = System.getProperty("user.dir");
