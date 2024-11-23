@@ -25,10 +25,11 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox {
 
     private static final String GLOBAL_JAVA_CLASS_NAME = "Main.java";
 
-    private static final long TIME_OUT = 5000L;
+    private static final long TIME_OUT = 2000L;
 
     @Override
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest executeCodeRequest) {
+        // 走这里
         List<String> inputList = executeCodeRequest.getInputList();
         String code = executeCodeRequest.getCode();
         String language = executeCodeRequest.getLanguage();
@@ -40,7 +41,7 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox {
         ExecuteMessage compileFileExecuteMessage = compileFile(userCodeFile);
         System.out.println(compileFileExecuteMessage);
 
-        // 3. 执行代码，得到输出结果
+//        3. 执行代码，得到输出结果
         List<ExecuteMessage> executeMessageList = runFile(userCodeFile, inputList);
 
 //        4. 收集整理输出结果
