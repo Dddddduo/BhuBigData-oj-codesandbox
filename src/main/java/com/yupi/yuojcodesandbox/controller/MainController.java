@@ -38,14 +38,19 @@ public class MainController {
     ExecuteCodeResponse executeCode(@RequestBody ExecuteCodeRequest executeCodeRequest, HttpServletRequest request,
                                     HttpServletResponse response) {
         // 基本的认证
-        String authHeader = request.getHeader(AUTH_REQUEST_HEADER);
-        if (!AUTH_REQUEST_SECRET.equals(authHeader)) {
-            response.setStatus(403);
-            return null;
-        }
+//        String authHeader = request.getHeader(AUTH_REQUEST_HEADER);
+//        if (!AUTH_REQUEST_SECRET.equals(authHeader)) {
+//            response.setStatus(403);
+//            return null;
+//        }
+
+        System.out.println("发起请求");
+
         if (executeCodeRequest == null) {
             throw new RuntimeException("请求参数为空");
         }
+        // 调用代码沙箱
+        ExecuteCodeResponse executeCodeResponse = javaNativeCodeSandbox.executeCode(executeCodeRequest);
         return javaNativeCodeSandbox.executeCode(executeCodeRequest);
     }
 }
