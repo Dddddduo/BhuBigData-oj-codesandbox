@@ -15,6 +15,7 @@ import java.util.List;
 public class ProcessUtils {
 
     /**
+     * 编译
      * 执行进程并获取信息
      *
      * @param runProcess
@@ -33,41 +34,63 @@ public class ProcessUtils {
             // 正常退出
             if (exitValue == 0) {
                 System.out.println(opName + "成功");
-                // 分批获取进程的正常输出
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(runProcess.getInputStream()));
-                List<String> outputStrList = new ArrayList<>();
-                // 逐行读取
-                String compileOutputLine;
-                while ((compileOutputLine = bufferedReader.readLine()) != null) {
-                    outputStrList.add(compileOutputLine);
-                }
-                executeMessage.setMessage(StringUtils.join(outputStrList, "\n"));
             } else {
                 // 异常退出
                 System.out.println(opName + "失败，错误码： " + exitValue);
-                // 分批获取进程的正常输出
-                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(runProcess.getInputStream()));
-                List<String> outputStrList = new ArrayList<>();
-                // 逐行读取
-                String compileOutputLine;
-                while ((compileOutputLine = bufferedReader.readLine()) != null) {
-                    outputStrList.add(compileOutputLine);
-                }
-                executeMessage.setMessage(StringUtils.join(outputStrList, "\n"));
-
-                // 分批获取进程的错误输出
-                BufferedReader errorBufferedReader = new BufferedReader(new InputStreamReader(runProcess.getErrorStream()));
-                // 逐行读取
-                List<String> errorOutputStrList = new ArrayList<>();
-                // 逐行读取
-                String errorCompileOutputLine;
-                while ((errorCompileOutputLine = errorBufferedReader.readLine()) != null) {
-                    errorOutputStrList.add(errorCompileOutputLine);
-                }
-                executeMessage.setErrorMessage(StringUtils.join(errorOutputStrList, "\n"));
             }
             stopWatch.stop();
             executeMessage.setTime(stopWatch.getLastTaskTimeMillis());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return executeMessage;
+    }
+
+    /**
+     * 运行
+     * 执行进程并获取信息
+     *
+     * @param runProcess
+     * @param opName
+     * @param inputArgs
+     * @return
+     */
+    public static ExecuteMessage runProcessAndGetMessage(Process runProcess, String opName ,String inputArgs) {
+        ExecuteMessage executeMessage = new ExecuteMessage();
+        try {
+            System.out.println(opName);
+            StopWatch stopWatch = new StopWatch();
+            stopWatch.start();
+            // 等待程序执行，获取错误码
+//            int exitValue = runProcess.waitFor();
+//            executeMessage.setExitValue(exitValue);
+
+            List<String> outputStrList = new ArrayList<>();
+
+            OutputStream outputStream = runProcess.getOutputStream();
+            InputStream inputStream = runProcess.getInputStream();
+
+            // 向进程传递输入参数
+            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
+                writer.write(inputArgs);
+                writer.newLine();  // 如果需要换行
+                writer.flush();
+            }
+
+            // 读取进程的输出（如果有的话）
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.out.println("结果是+"+line);
+                    outputStrList.add(line);
+                }
+            }
+
+            // 获取执行时间
+            stopWatch.stop();
+            executeMessage.setTime(stopWatch.getLastTaskTimeMillis());
+
+            executeMessage.setMessage(StringUtils.join(outputStrList, "\n"));
         } catch (Exception e) {
             e.printStackTrace();
         }
