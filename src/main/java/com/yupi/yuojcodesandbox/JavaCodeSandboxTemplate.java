@@ -9,12 +9,9 @@ import com.yupi.yuojcodesandbox.model.JudgeInfo;
 import com.yupi.yuojcodesandbox.utils.ProcessUtils;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.File;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
-
+import java.util.*;
 /**
  * Java 代码沙箱模板方法的实现
  */
@@ -39,13 +36,15 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox {
 
 //        2. 编译代码，得到 class 文件
         ExecuteMessage compileFileExecuteMessage = compileFile(userCodeFile);
-        System.out.println(compileFileExecuteMessage);
+        System.out.println("编译成功,得到class文件"+compileFileExecuteMessage);
 
 //        3. 执行代码，得到输出结果
         List<ExecuteMessage> executeMessageList = runFile(userCodeFile, inputList);
 
 //        4. 收集整理输出结果
         ExecuteCodeResponse outputResponse = getOutputResponse(executeMessageList);
+
+        System.out.println(outputResponse);
 
 //        5. 文件清理
         boolean b = deleteFile(userCodeFile);
@@ -85,13 +84,13 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox {
         String compileCmd = String.format("javac -encoding utf-8 %s", userCodeFile.getAbsolutePath());
         try {
             Process compileProcess = Runtime.getRuntime().exec(compileCmd);
+            // 如果编译错误程序退出状态是1
             ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(compileProcess, "编译");
-            if (executeMessage.getExitValue() != 0) {
-                throw new RuntimeException("编译错误");
-            }
+//            if (executeMessage.getExitValue() != 0) {
+//                throw new RuntimeException("编译错误");
+//            }
             return executeMessage;
         } catch (Exception e) {
-//            return getErrorResponse(e);
             throw new RuntimeException(e);
         }
     }
@@ -107,11 +106,12 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox {
 
         List<ExecuteMessage> executeMessageList = new ArrayList<>();
         for (String inputArgs : inputList) {
-//            String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s Main %s", userCodeParentPath, inputArgs);
-            String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp %s Main %s", userCodeParentPath, inputArgs);
             try {
+                // 构造命令，不传递参数
+                String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp \"%s\" Main", userCodeParentPath);
+                // 启动进程
                 Process runProcess = Runtime.getRuntime().exec(runCmd);
-                // 超时控制
+                // 在每一个用例里面 去处理 创建一个新的线程 先睡2000s 时间一到就销毁主线程 实现超时处理
                 new Thread(() -> {
                     try {
                         Thread.sleep(TIME_OUT);
@@ -121,9 +121,29 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox {
                         throw new RuntimeException(e);
                     }
                 }).start();
-                ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(runProcess, "运行");
+//                  通过工具类获取输入输出
+                ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(runProcess, "运行" ,inputArgs);
                 System.out.println(executeMessage);
                 executeMessageList.add(executeMessage);
+
+//                OutputStream outputStream = runProcess.getOutputStream();
+//                InputStream inputStream = runProcess.getInputStream();
+//
+//                // 向进程传递输入参数
+//                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
+//                    writer.write(inputArgs);
+//                    writer.newLine();  // 如果需要换行
+//                    writer.flush();
+//                }
+//
+//                // 读取进程的输出（如果有的话）
+//                try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+//                    String line;
+//                    while ((line = reader.readLine()) != null) {
+//                        System.out.println("结果"+line);  // 输出进程的标准输出
+//                    }
+//                }
+
             } catch (Exception e) {
                 throw new RuntimeException("执行错误", e);
             }
