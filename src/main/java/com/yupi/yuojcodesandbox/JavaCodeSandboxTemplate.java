@@ -26,6 +26,9 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox {
 
     @Override
     public ExecuteCodeResponse executeCode(ExecuteCodeRequest executeCodeRequest) {
+
+        System.out.println("看看我执行了吗");
+
         // 走这里
         List<String> inputList = executeCodeRequest.getInputList();
         String code = executeCodeRequest.getCode();
@@ -39,7 +42,7 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox {
         System.out.println("编译成功,得到class文件"+compileFileExecuteMessage);
 
 //        3. 执行代码，得到输出结果
-        List<ExecuteMessage> executeMessageList = runFile(userCodeFile, inputList);
+        List<ExecuteMessage> executeMessageList = runFile(userCodeFile, inputList ,compileFileExecuteMessage);
 
 //        4. 收集整理输出结果
         ExecuteCodeResponse outputResponse = getOutputResponse(executeMessageList);
@@ -52,6 +55,7 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox {
             log.error("deleteFile error, userCodeFilePath = {}", userCodeFile.getAbsolutePath());
         }
         return outputResponse;
+//        return null;
     }
 
 
@@ -86,9 +90,10 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox {
             Process compileProcess = Runtime.getRuntime().exec(compileCmd);
             // 如果编译错误程序退出状态是1
             ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(compileProcess, "编译");
-//            if (executeMessage.getExitValue() != 0) {
+            if (executeMessage.getExitValue() != 0) {
+                executeMessage.setErrorMessage("编译错误");
 //                throw new RuntimeException("编译错误");
-//            }
+            }
             return executeMessage;
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -101,7 +106,13 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox {
      * @param inputList
      * @return
      */
-    public List<ExecuteMessage> runFile(File userCodeFile, List<String> inputList) {
+    public List<ExecuteMessage> runFile(File userCodeFile, List<String> inputList ,ExecuteMessage compileExecuteMessage) {
+
+        // 如果编译错误 直接退出
+        if(compileExecuteMessage.getErrorMessage()!=null&&compileExecuteMessage.getErrorMessage().equals("编译错误")){
+            return null;
+        }
+
         String userCodeParentPath = userCodeFile.getParentFile().getAbsolutePath();
 
         List<ExecuteMessage> executeMessageList = new ArrayList<>();
@@ -126,24 +137,6 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox {
                 System.out.println(executeMessage);
                 executeMessageList.add(executeMessage);
 
-//                OutputStream outputStream = runProcess.getOutputStream();
-//                InputStream inputStream = runProcess.getInputStream();
-//
-//                // 向进程传递输入参数
-//                try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
-//                    writer.write(inputArgs);
-//                    writer.newLine();  // 如果需要换行
-//                    writer.flush();
-//                }
-//
-//                // 读取进程的输出（如果有的话）
-//                try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
-//                    String line;
-//                    while ((line = reader.readLine()) != null) {
-//                        System.out.println("结果"+line);  // 输出进程的标准输出
-//                    }
-//                }
-
             } catch (Exception e) {
                 throw new RuntimeException("执行错误", e);
             }
@@ -157,6 +150,12 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox {
      * @return
      */
     public ExecuteCodeResponse getOutputResponse(List<ExecuteMessage> executeMessageList) {
+
+        // 编译错误 直接退出
+        if(executeMessageList==null){
+            return new ExecuteCodeResponse("编译错误",3,null);
+        }
+
         ExecuteCodeResponse executeCodeResponse = new ExecuteCodeResponse();
         List<String> outputList = new ArrayList<>();
         // 取用时最大值，便于判断是否超时
