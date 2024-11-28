@@ -61,8 +61,8 @@ public class ProcessUtils {
             System.out.println(opName);
             StopWatch runStopWatch = new StopWatch();
             runStopWatch.start();
+
             // 等待程序执行，获取错误码
-//            int exitValue = runProcess.waitFor();
 //            executeMessage.setExitValue(exitValue);
 
             List<String> outputStrList = new ArrayList<>();
@@ -70,16 +70,27 @@ public class ProcessUtils {
             OutputStream outputStream = runProcess.getOutputStream();
             InputStream inputStream = runProcess.getInputStream();
 
+            System.out.println("拿到的输入流: "+outputStream.toString());
+            System.out.println("拿到的输出流: "+inputStream.toString());
+
+            System.out.println("传入的参数是" + inputArgs);
+
             // 向进程传递输入参数
             try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
                 writer.write(inputArgs);
                 writer.newLine();  // 如果需要换行
                 writer.flush();
+            }catch ( Exception e){
+                System.out.println("向进程传递输入参数 抛出异常");
+                e.printStackTrace();
             }
 
             // 仅用于测试 StopWatch 的功能
             // todo 完善代码执行时间信息的获取
 //            Thread.sleep(1000);
+
+            int exitCode  = runProcess.waitFor();
+            System.out.println("进程的退出码是"+exitCode);
 
             // 读取进程的输出（如果有的话）
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
@@ -88,6 +99,9 @@ public class ProcessUtils {
                     System.out.println("结果是+"+line);
                     outputStrList.add(line);
                 }
+            }catch ( Exception e){
+                System.out.println("读取进程的输出 抛出异常");
+                e.printStackTrace();
             }
 
             // 获取执行时间
@@ -95,11 +109,88 @@ public class ProcessUtils {
             executeMessage.setTime(runStopWatch.getLastTaskTimeMillis());
 
             executeMessage.setMessage(StringUtils.join(outputStrList, "\n"));
+
+            // 获取进程的错误输出流
+            BufferedReader errorReader = new BufferedReader(new InputStreamReader(runProcess.getErrorStream()));
+            String errorLine;
+            while ((errorLine = errorReader.readLine()) != null) {
+                System.err.println("错误的输出流: " + errorLine);
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
         return executeMessage;
     }
+
+//    public static ExecuteMessage runProcessAndGetMessage(Process runProcess, String opName, String inputArgs) {
+//        ExecuteMessage executeMessage = new ExecuteMessage();
+//        try {
+//            System.out.println(opName);
+//            StopWatch runStopWatch = new StopWatch();
+//            runStopWatch.start();
+//
+//            List<String> outputStrList = new ArrayList<>();
+//
+//            OutputStream outputStream = runProcess.getOutputStream();
+//            InputStream inputStream = runProcess.getInputStream();
+//            InputStream errorStream = runProcess.getErrorStream();  // 获取错误流
+//
+//            System.out.println("传入的参数是" + inputArgs);
+//
+//            // 向进程传递输入参数
+//            try (BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(outputStream))) {
+//                writer.write(inputArgs);
+//                writer.newLine();  // 如果需要换行
+//                writer.flush();
+//            } catch (Exception e) {
+//                System.out.println("向进程传递输入参数 抛出异常");
+//                e.printStackTrace();
+//            }
+//
+//            // 启动线程读取输出流，避免阻塞
+//            Thread outputThread = new Thread(() -> {
+//                try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
+//                    String line;
+//                    while ((line = reader.readLine()) != null) {
+//                        System.out.println("结果是: " + line);
+//                        outputStrList.add(line);
+//                    }
+//                } catch (Exception e) {
+//                    System.out.println("读取进程的输出 抛出异常");
+//                    e.printStackTrace();
+//                }
+//            });
+//            outputThread.start();
+//
+//            // 启动线程读取错误流，避免死锁
+//            Thread errorThread = new Thread(() -> {
+//                try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(errorStream))) {
+//                    String errorLine;
+//                    while ((errorLine = errorReader.readLine()) != null) {
+//                        System.err.println("错误: " + errorLine);
+//                    }
+//                } catch (Exception e) {
+//                    System.out.println("读取进程的错误流 抛出异常");
+//                    e.printStackTrace();
+//                }
+//            });
+//            errorThread.start();
+//
+//            // 等待输出流线程和错误流线程结束
+//            outputThread.join();
+//            errorThread.join();
+//
+//            // 获取执行时间
+//            runStopWatch.stop();
+//            executeMessage.setTime(runStopWatch.getLastTaskTimeMillis());
+//
+//            executeMessage.setMessage(String.join("\n", outputStrList));
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+//        return executeMessage;
+//    }
 
     /**
      * 执行交互式进程并获取信息
@@ -141,4 +232,5 @@ public class ProcessUtils {
         }
         return executeMessage;
     }
+
 }
