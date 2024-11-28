@@ -59,8 +59,8 @@ public class ProcessUtils {
         ExecuteMessage executeMessage = new ExecuteMessage();
         try {
             System.out.println(opName);
-            StopWatch stopWatch = new StopWatch();
-            stopWatch.start();
+            StopWatch runStopWatch = new StopWatch();
+            runStopWatch.start();
             // 等待程序执行，获取错误码
 //            int exitValue = runProcess.waitFor();
 //            executeMessage.setExitValue(exitValue);
@@ -77,6 +77,10 @@ public class ProcessUtils {
                 writer.flush();
             }
 
+            // 仅用于测试 StopWatch 的功能
+            // todo 完善代码执行时间信息的获取
+//            Thread.sleep(1000);
+
             // 读取进程的输出（如果有的话）
             try (BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream))) {
                 String line;
@@ -87,8 +91,8 @@ public class ProcessUtils {
             }
 
             // 获取执行时间
-            stopWatch.stop();
-            executeMessage.setTime(stopWatch.getLastTaskTimeMillis());
+            runStopWatch.stop();
+            executeMessage.setTime(runStopWatch.getLastTaskTimeMillis());
 
             executeMessage.setMessage(StringUtils.join(outputStrList, "\n"));
         } catch (Exception e) {

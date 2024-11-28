@@ -45,12 +45,12 @@ public class MainController {
 //        }
 
         System.out.println("发起请求");
-
         if (executeCodeRequest == null) {
             throw new RuntimeException("请求参数为空");
         }
         // 调用代码沙箱
         ExecuteCodeResponse executeCodeResponse = javaNativeCodeSandbox.executeCode(executeCodeRequest);
-        return javaNativeCodeSandbox.executeCode(executeCodeRequest);
+        // 返回结果
+        return executeCodeResponse;
     }
 }

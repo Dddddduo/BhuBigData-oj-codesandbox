@@ -29,4 +29,7 @@ public class ExecuteCodeResponse {
      * 判题信息
      */
     private JudgeInfo judgeInfo;
+
+    public ExecuteCodeResponse(String number, int i, Object o) {
+    }
 }
