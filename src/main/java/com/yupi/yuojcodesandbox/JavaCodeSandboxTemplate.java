@@ -50,10 +50,10 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox {
         System.out.println(outputResponse);
 
 //        5. 文件清理
-        boolean b = deleteFile(userCodeFile);
-        if (!b) {
-            log.error("deleteFile error, userCodeFilePath = {}", userCodeFile.getAbsolutePath());
-        }
+//        boolean b = deleteFile(userCodeFile);
+//        if (!b) {
+//            log.error("deleteFile error, userCodeFilePath = {}", userCodeFile.getAbsolutePath());
+//        }
         return outputResponse;
 //        return null;
     }
@@ -106,34 +106,82 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox {
      * @param inputList
      * @return
      */
-    public List<ExecuteMessage> runFile(File userCodeFile, List<String> inputList ,ExecuteMessage compileExecuteMessage) {
 
+    // Process 写法
+//    public List<ExecuteMessage> runFile(File userCodeFile, List<String> inputList ,ExecuteMessage compileExecuteMessage) {
+//        // 如果编译错误 直接退出
+//        if(compileExecuteMessage.getErrorMessage()!=null&&compileExecuteMessage.getErrorMessage().equals("编译错误")){
+//            return null;
+//        }
+//        String userCodeParentPath = userCodeFile.getParentFile().getAbsolutePath();
+//        System.out.println("编译后的文件的路径是"+userCodeParentPath);
+//        List<ExecuteMessage> executeMessageList = new ArrayList<>();
+//        for (String inputArgs : inputList) {
+//            try {
+//                // 构造命令，不传递参数
+//                String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp \"%s\" Main", userCodeParentPath);
+//                System.out.println("执行的代码是"+runCmd);
+//                // 启动进程
+//                Process runProcess = Runtime.getRuntime().exec(runCmd);
+//                // 在每一个用例里面 去处理 创建一个新的线程 先睡2000s 时间一到就销毁主线程 实现超时处理
+//                new Thread(() -> {
+//                    try {
+//                        Thread.sleep(TIME_OUT);
+//                        System.out.println("超时了，中断");
+//                        runProcess.destroy();
+//                    } catch (InterruptedException e) {
+//                        throw new RuntimeException(e);
+//                    }
+//                }).start();
+//                // 通过工具类获取输入输出
+//                ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(runProcess, "运行" ,inputArgs);
+//                System.out.println(executeMessage);
+//                executeMessageList.add(executeMessage);
+//            } catch (Exception e) {
+//                throw new RuntimeException("执行错误", e);
+//            }
+//        }
+//        return executeMessageList;
+//    }
+
+    // ProcessBuilder 写法
+    public List<ExecuteMessage> runFile(File userCodeFile, List<String> inputList, ExecuteMessage compileExecuteMessage) {
         // 如果编译错误 直接退出
-        if(compileExecuteMessage.getErrorMessage()!=null&&compileExecuteMessage.getErrorMessage().equals("编译错误")){
+        if (compileExecuteMessage.getErrorMessage() != null && compileExecuteMessage.getErrorMessage().equals("编译错误")) {
             return null;
         }
 
         String userCodeParentPath = userCodeFile.getParentFile().getAbsolutePath();
+        System.out.println("编译后的文件的路径是" + userCodeParentPath);
 
         List<ExecuteMessage> executeMessageList = new ArrayList<>();
         for (String inputArgs : inputList) {
             try {
                 // 构造命令，不传递参数
                 String runCmd = String.format("java -Xmx256m -Dfile.encoding=UTF-8 -cp \"%s\" Main", userCodeParentPath);
+                System.out.println("执行的代码是" + runCmd);
+
+                // 使用 ProcessBuilder 创建一个新的进程
+                ProcessBuilder processBuilder = new ProcessBuilder(runCmd.split(" "));
+                processBuilder.directory(new File(userCodeParentPath)); // 设置工作目录
+                processBuilder.redirectErrorStream(true); // 合并标准错误输出和标准输出
+
                 // 启动进程
-                Process runProcess = Runtime.getRuntime().exec(runCmd);
-                // 在每一个用例里面 去处理 创建一个新的线程 先睡2000s 时间一到就销毁主线程 实现超时处理
+                Process runProcess = processBuilder.start();
+
+                // 在每一个用例里面创建一个新的线程来处理超时
                 new Thread(() -> {
                     try {
-                        Thread.sleep(TIME_OUT);
+                        Thread.sleep(TIME_OUT); // 等待 TIME_OUT 毫秒
                         System.out.println("超时了，中断");
                         runProcess.destroy();
                     } catch (InterruptedException e) {
-                        throw new RuntimeException(e);
+                        e.printStackTrace();
                     }
                 }).start();
-//                  通过工具类获取输入输出
-                ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(runProcess, "运行" ,inputArgs);
+
+                // 通过工具类获取输入输出
+                ExecuteMessage executeMessage = ProcessUtils.runProcessAndGetMessage(runProcess, "运行", inputArgs);
                 System.out.println(executeMessage);
                 executeMessageList.add(executeMessage);
 
@@ -143,6 +191,7 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox {
         }
         return executeMessageList;
     }
+
 
     /**
      * 4、获取输出结果
@@ -217,4 +266,5 @@ public abstract class JavaCodeSandboxTemplate implements CodeSandbox {
         executeCodeResponse.setJudgeInfo(new JudgeInfo());
         return executeCodeResponse;
     }
+
 }
