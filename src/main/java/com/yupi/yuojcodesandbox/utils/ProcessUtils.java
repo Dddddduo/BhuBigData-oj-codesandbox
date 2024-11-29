@@ -110,6 +110,7 @@ public class ProcessUtils {
 
             executeMessage.setMessage(StringUtils.join(outputStrList, "\n"));
 
+            //
             // 获取进程的错误输出流
             BufferedReader errorReader = new BufferedReader(new InputStreamReader(runProcess.getErrorStream()));
             String errorLine;
